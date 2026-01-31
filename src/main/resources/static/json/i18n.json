@@ -1,0 +1,8 @@
+{
+    "ko": {
+        "ClassNotFoundException": "핸들러 클래스를 찾을 수 없습니다."
+    },
+    "en": {
+        "ClassNotFoundException": "Handler class not found."
+    }
+}

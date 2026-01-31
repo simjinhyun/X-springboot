@@ -1,0 +1,47 @@
+/* 메뉴 기본 스타일 */
+#menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#menu li {
+    margin: 4px 0;
+}
+
+/* 주메뉴와 부메뉴 동일 폰트 크기 */
+#menu a {
+    display: block;
+    padding: 10px 14px;
+    text-decoration: none;
+    color: #333;
+    font-size: 14px;
+    /* 주메뉴/부메뉴 동일 */
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+/* hover 시 */
+#menu a:hover {
+    background: #3498db;
+    color: #fff;
+}
+
+/* 현재 해시와 매칭된 메뉴 강조 */
+#menu a.active {
+    background: #e0e0e0;
+    /* 연한 회색 */
+    color: #000;
+}
+
+/* 부메뉴 기본 숨김 */
+#menu ul ul {
+    display: none;
+    margin-left: 12px;
+}
+
+/* 부메뉴 스타일 (열렸을 때도 주메뉴와 동일 폰트) */
+#menu ul ul a {
+    background: #f9f9f9;
+    font-size: 14px;
+}

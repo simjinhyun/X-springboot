@@ -1,0 +1,20 @@
+# 빌드 결과물
+target/
+*.jar
+*.war
+
+# 임시 파일 (빌드 스크립트용)
+*.tmp
+*.bak
+
+# IDE 설정
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# 로그 및 OS 관련
+*.log
+.DS_Store

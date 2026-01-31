@@ -1,0 +1,30 @@
+[
+    {
+        "홈 (대시보드)": "#home"
+    },
+    {
+        "사용자관리": "#user/list",
+        "children": [
+            {
+                "사용자리스트": "#user/list"
+            },
+            {
+                "사용자등록": "#user/create"
+            }
+        ]
+    },
+    {
+        "주소록": "#addressbook/list",
+        "children": [
+            {
+                "주소록리스트": "#addressbook/list"
+            },
+            {
+                "주소록등록": "#addressbook/create"
+            }
+        ]
+    },
+    {
+        "로그아웃": "javascript:logout()"
+    }
+]

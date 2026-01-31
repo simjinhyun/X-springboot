@@ -1,0 +1,101 @@
+:root {
+    /* Overlay */
+    --overlay-bg: rgba(0, 0, 0, 0.5);
+    --overlay-z: 9999;
+
+    /* Modal */
+    --modal-bg: #fff;
+    --modal-padding: 20px;
+    --modal-radius: 4px;
+    --modal-min-width: 200px;
+    --modal-z: 10000;
+    --modal-text-align: center;
+
+    /* Close button */
+    --close-top: 8px;
+    --close-right: 12px;
+    --close-font-size: 18px;
+    --close-font-weight: bold;
+    --close-cursor: pointer;
+
+    /* Loading layer */
+    --loading-bg: transparent;
+    --loading-z: -1;
+
+    /* Spinner */
+    --spinner-border: 8px;
+    --spinner-size: 60px;
+    --spinner-color-base: #e0e0e0;
+    --spinner-color-top: #3498db;
+    --spinner-speed: 1s;
+}
+
+/* 공용 오버레이 */
+#xspaOverlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--overlay-bg);
+    z-index: var(--overlay-z);
+    align-items: center;
+    justify-content: center;
+}
+
+/* 모달 공통 */
+#xspaOverlay .xspa-modal {
+    background: var(--modal-bg);
+    padding: var(--modal-padding);
+    border-radius: var(--modal-radius);
+    min-width: var(--modal-min-width);
+    position: relative;
+    z-index: var(--modal-z);
+    text-align: var(--modal-text-align);
+}
+
+/* 닫기 버튼 (우측 상단 X) */
+#xspaOverlay .xspa-modal .close {
+    position: absolute;
+    top: var(--close-top);
+    right: var(--close-right);
+    cursor: var(--close-cursor);
+    font-weight: var(--close-font-weight);
+    font-size: var(--close-font-size);
+}
+
+/* 로딩 레이어 */
+#xspaLoading {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: var(--loading-z);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--loading-bg);
+}
+
+/* 스피너 */
+#xspaLoading .spinner {
+    border: var(--spinner-border) solid var(--spinner-color-base);
+    border-top: var(--spinner-border) solid var(--spinner-color-top);
+    border-radius: 50%;
+    width: var(--spinner-size);
+    height: var(--spinner-size);
+    animation: spin var(--spinner-speed) linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="x.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="x.js"></script>
+    <script>
+        $(function () {
+            initX();
+            X.Call({
+                url: "/api/auth/whoami",
+                success: function (r) {
+                    $.getJSON("json/priority.json", function (priority) {
+                        var roles = {}
+                        r.data.role.split(",").map(function (x) {
+                            return roles[x.trim()] = true;
+                        });
+                        var mainRole = priority.find(function (role) {
+                            return roles[role];
+                        });
+                        $.getJSON("json/" + mainRole + ".json", function (menu) {
+
+
+                            $("#menu").empty().append(makeMenu(menu));
+                            // 주메뉴 클릭 시 부메뉴 단순 토글
+                            $(document).on("click", "#menu > ul > li > a", function (e) {
+                                var $submenu = $(this).siblings("ul");
+                                if ($submenu.length) {
+                                    $submenu.slideToggle(200);
+                                }
+                            });
+                            $("#layout").css("display", "flex");
+                        });
+
+                    });
+                },
+                error: function (r) {
+                    $("#login").css("display", "flex");
+                    $("input[name='p_pass']").focus();
+                }
+            });
+        });
+
+        function makeMenu(menu) {
+            var $ul = $("<ul>");
+
+            menu.forEach(function (item) {
+                // 최상위 키(label)와 값(href) 추출
+                var label = Object.keys(item)[0];
+                var href = item[label];
+
+                var $li = $("<li>");
+                var $a = $("<a>").attr("href", href).text(label);
+                $li.append($a);
+
+                // children 있으면 하위 메뉴도 추가
+                if (item.children) {
+                    var $childUl = $("<ul>");
+                    item.children.forEach(function (child) {
+                        var childLabel = Object.keys(child)[0];
+                        var childHref = child[childLabel];
+                        var $childLi = $("<li>");
+                        var $childA = $("<a>").attr("href", childHref).text(childLabel);
+                        $childLi.append($childA);
+                        $childUl.append($childLi);
+                    });
+                    $li.append($childUl);
+                }
+
+                $ul.append($li);
+            });
+            return $ul;
+        }
+        function login(e) {
+            e.preventDefault();
+            var data = X.FormToJson(e);
+            console.log(data);
+            X.Call({
+                url: "/api/auth/login",
+                parser: "SPList",
+                data: data,
+                success: function (r) {
+                    if (r.data) sessionStorage.setItem("XToken", r.data);
+                    location.reload();
+                }
+            });
+        }
+        function logout() {
+            sessionStorage.removeItem("XToken");
+            location.reload();
+        }
+    </script>
+</head>
+
+<body>
+    <!-- 로그인 박스 -->
+    <div id="login">
+        <div class="login-box">
+            <form id="sp_user_s" onsubmit="login(event)">
+                <input type="text" name="p_id" placeholder="아이디" value="admin" autocomplete="username">
+                <input type="password" name="p_pass" placeholder="비밀번호" value="8837" autocomplete="current-password">
+                <button type="submit">로그인</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 메인 레이아웃 -->
+    <div id="layout">
+        <div id="menu"></div>
+        <div id="content"></div>
+    </div>
+</body>
+
+</html>
