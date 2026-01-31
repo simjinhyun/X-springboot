@@ -30,9 +30,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RequestMapping("/api")
 public class X implements ApplicationListener<ApplicationReadyEvent> {
 
-    public static final String BUILD_DATE = "###BUILD_DATE###";
-    public static final String VERSION = "###VERSION###";
-    public static final String REVISION = "###REVISION###";
+    public static class About {
+        public final String BUILD_DATE = "###BUILD_DATE###";
+        public final String VERSION = "###VERSION###";
+        public final String REVISION = "###REVISION###";
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     /// X.Error

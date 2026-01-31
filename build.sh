@@ -1,31 +1,29 @@
 #!/bin/bash
-set -e  # 에러 발생 시 즉시 종료
 
-#!/bin/bash
-
-# 1. 정보 추출
 REV=$(git rev-parse --short HEAD)
-# 수정된 파일이 있으면 -DIRTY 추가
-DIRTY=$(git diff --quiet || echo "-DIRTY")
-VER="${REV}${DIRTY}"
+VER=$(git describe --tags --dirty --always)
 DATE=$(date "+%Y-%m-%d %H:%M:%S")
+TARGET="src/main/java/kr/co/semperpi/X.java"
 
-# 2. 원본 백업
-TARGET_FILE="src/main/java/kr/co/semperpi/X.java"
-cp $TARGET_FILE "${TARGET_FILE}.tmp"
+# 1. 백업
+cp "$TARGET" "$TARGET.bak"
 
-# 3. sed로 치환 (홀더 규격 준수)
-sed -i "s/###REVISION###/$REV/g" $TARGET_FILE
-sed -i "s/###VERSION###/$VER/g" $TARGET_FILE
-sed -i "s/###BUILD_DATE###/$DATE/g" $TARGET_FILE
+# 2. 치환
+sed -i "s/###REVISION###/$REV/g" "$TARGET"
+sed -i "s/###VERSION###/$VER/g" "$TARGET"
+sed -i "s/###BUILD_DATE###/$DATE/g" "$TARGET"
 
-# 4. 빌드 실행
-./mvnw clean package
+# 3. 빌드 (실패해도 다음으로 넘어감)
+mvn clean package
 
-# 5. 원본 복구
-mv "${TARGET_FILE}.tmp" $TARGET_FILE
+# 4. 무조건 복구
+mv "$TARGET.bak" "$TARGET"
 
-echo "Build Complete: $VER ($DATE)"
-
-# 빌드 성공 시 JAR 실행
-java -jar target/mis.jar
+# 5. 결과 확인 및 실행
+if [ -f "target/mis.jar" ]; then
+    echo "Build Success: $VER"
+    java -jar target/mis.jar
+else
+    echo "Build Failed!"
+    exit 1
+fi
