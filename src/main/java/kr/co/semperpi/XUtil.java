@@ -3,19 +3,12 @@ package kr.co.semperpi;
 import java.util.*;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.filter.AssignableTypeFilter;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -26,7 +19,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.SecureRandom;
 
-public class Util {
+public class XUtil {
     private static final char[] BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray();
 
     public static String generateReqId() {
@@ -84,7 +77,7 @@ public class Util {
                     .filter(m -> m.getReturnType().equals(void.class))
                     .filter(m -> {
                         Class<?>[] params = m.getParameterTypes();
-                        return params.length == 1 && params[0].equals(Ctx.class);
+                        return params.length == 1 && params[0].equals(XContext.class);
                     })
                     .forEach(m -> addHandler(m, clazz, localApi));
         }
@@ -171,37 +164,26 @@ public class Util {
     /**
      * 평문을 기존해시 salt이용해서 해싱해서 같은지 판단.
      */
-    public static boolean match(String plain, String hash) throws Exception {
-        // "salt:hash" 구조 분리
-        String[] parts = hash.split(":");
-        if (parts.length != 2) {
-            throw new IllegalArgumentException("Invalid stored password format");
-        }
-
-        byte[] salt = Base64.getDecoder().decode(parts[0]);
-        byte[] storedHash = Base64.getDecoder().decode(parts[1]);
-
-        // 입력 비밀번호를 동일한 방식으로 해싱
-        PBEKeySpec spec = new PBEKeySpec(plain.toCharArray(), salt, ITERATIONS, KEY_LENGTH);
-        SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        byte[] testHash = skf.generateSecret(spec).getEncoded();
-
-        // 결과 비교 (타이밍 공격 방지를 위해 Arrays.equals 사용)
-        return Arrays.equals(storedHash, testHash);
-    }
-
-    public static String readBody(HttpServletRequest request) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        try (InputStream inputStream = request.getInputStream();
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
+    public static boolean match(String plain, String hash) {
+        try {
+            // "salt:hash" 구조 분리
+            String[] parts = hash.split(":");
+            if (parts.length != 2) {
+                throw new IllegalArgumentException("Invalid stored password format");
             }
+
+            byte[] salt = Base64.getDecoder().decode(parts[0]);
+            byte[] storedHash = Base64.getDecoder().decode(parts[1]);
+
+            // 입력 비밀번호를 동일한 방식으로 해싱
+            PBEKeySpec spec = new PBEKeySpec(plain.toCharArray(), salt, ITERATIONS, KEY_LENGTH);
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] testHash = skf.generateSecret(spec).getEncoded();
+
+            // 결과 비교 (타이밍 공격 방지를 위해 Arrays.equals 사용)
+            return Arrays.equals(storedHash, testHash);
+        } catch (Exception e) {
+            throw new XError(e.getClass().getSimpleName(), new Object[] { e.getMessage() });
         }
-        String s = sb.toString();
-        X.logger.debug("요청바디:" + s);
-        return s;
     }
 }

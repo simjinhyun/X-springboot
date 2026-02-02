@@ -12,11 +12,12 @@ function initX() {
         LANG = "ko"; // 기본값
         localStorage.setItem("LANG", LANG);
     }
-    MSG = function (key, data) {
+    function MSG(key, data) {
+        console.log(key, data);
         let msg = I18N[LANG] && I18N[LANG][key] ? I18N[LANG][key] : key;
         if (Array.isArray(data)) {
             data.forEach(function (val, idx) {
-                const regex = new RegExp("\\{\\$" + idx + "\\}", "g");
+                const regex = new RegExp("\\$\\{" + idx + "\\}", "g");
                 msg = msg.replace(regex, val);
             });
         }
@@ -131,7 +132,7 @@ function initX() {
                     if (o.success) o.success(r);
                 } else {
                     if (o.error) o.error(r);
-                    else Alert(MSG(r.code));
+                    else Alert(MSG(r.code, r.data));
                 }
             },
             error: function (xhr, status, error) {

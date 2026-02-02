@@ -22,7 +22,7 @@ mv "$TARGET.bak" "$TARGET"
 # 5. 결과 확인 및 실행
 if [ -f "target/mis.jar" ]; then
     echo "Build Success: $VER"
-    java -jar target/mis.jar
+    java -jar target/mis-exec.jar
 else
     echo "Build Failed!"
     exit 1

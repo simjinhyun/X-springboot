@@ -1,39 +1,37 @@
--- CREATE (Insert)
-DROP PROCEDURE IF EXISTS sp_address_book_i;
-DELIMITER //
-CREATE PROCEDURE sp_address_book_i (
-    p_name    VARCHAR(50),
-    p_age     INT,
-    p_phone   VARCHAR(20),
-    p_address VARCHAR(100)
-)
+-- 1. Address Book: INSERT
+CREATE OR REPLACE PROCEDURE sp_address_book_i (
+    p_name    IN VARCHAR2,
+    p_age     IN NUMBER,
+    p_phone   IN VARCHAR2,
+    p_address IN VARCHAR2
+) AS
 BEGIN
     INSERT INTO t_address_book (c_name, c_age, c_phone, c_address)
     VALUES (p_name, p_age, p_phone, p_address);
-END //
-DELIMITER ;
+    COMMIT;
+END;
+/
 
--- READ (Select All)
-DROP PROCEDURE IF EXISTS sp_address_book_s;
-DELIMITER //
-CREATE PROCEDURE sp_address_book_s ()
+-- 2. Address Book: SELECT (오라클은 결과셋 반환 시 Cursor 필요)
+CREATE OR REPLACE PROCEDURE sp_address_book_s (
+    p_cursor OUT SYS_REFCURSOR
+) AS
 BEGIN
+    OPEN p_cursor FOR
     SELECT c_id, c_name, c_age, c_phone, c_address, c_created_at
     FROM t_address_book
     ORDER BY c_id;
-END //
-DELIMITER ;
+END;
+/
 
--- UPDATE
-DROP PROCEDURE IF EXISTS sp_address_book_u;
-DELIMITER //
-CREATE PROCEDURE sp_address_book_u (
-    p_id       INT,
-    p_name     VARCHAR(50),   -- 변경하지 않으려면 NULL 전달
-    p_age      INT,           -- 변경하지 않으려면 NULL 전달
-    p_phone    VARCHAR(20),   -- 변경하지 않으려면 NULL 전달
-    p_address  VARCHAR(100)   -- 변경하지 않으려면 NULL 전달
-)
+-- 3. Address Book: UPDATE
+CREATE OR REPLACE PROCEDURE sp_address_book_u (
+    p_id      IN NUMBER,
+    p_name    IN VARCHAR2,
+    p_age     IN NUMBER,
+    p_phone   IN VARCHAR2,
+    p_address IN VARCHAR2
+) AS
 BEGIN
     UPDATE t_address_book
     SET c_name    = COALESCE(p_name, c_name),
@@ -41,58 +39,59 @@ BEGIN
         c_phone   = COALESCE(p_phone, c_phone),
         c_address = COALESCE(p_address, c_address)
     WHERE c_id = p_id;
-END //
-DELIMITER ;
+    COMMIT;
+END;
+/
 
--- DELETE
-DROP PROCEDURE IF EXISTS sp_address_book_d;
-DELIMITER //
-CREATE PROCEDURE sp_address_book_d (
-    p_id INT
-)
+-- 4. Address Book: DELETE
+CREATE OR REPLACE PROCEDURE sp_address_book_d (
+    p_id IN NUMBER
+) AS
 BEGIN
-    DELETE FROM t_address_book
-    WHERE c_id = p_id;
-END //
-DELIMITER ;
+    DELETE FROM t_address_book WHERE c_id = p_id;
+    COMMIT;
+END;
+/
 
--- CREATE (Insert)
-DROP PROCEDURE IF EXISTS sp_user_i;
-DELIMITER //
-CREATE PROCEDURE sp_user_i (
-    p_id    VARCHAR(50),
-    p_pass  VARCHAR(255),
-    p_role  VARCHAR(50)
-)
+-- 5. User: INSERT
+CREATE OR REPLACE PROCEDURE sp_user_i (
+    p_id   IN VARCHAR2,
+    p_pass IN VARCHAR2,
+    p_role IN VARCHAR2
+) AS
 BEGIN
     INSERT INTO t_user (c_id, c_pass, c_role)
     VALUES (p_id, p_pass, p_role);
-END //
-DELIMITER ;
+    COMMIT;
+END;
+/
 
--- READ (Select One)
-DROP PROCEDURE IF EXISTS sp_user_s;
-DELIMITER //
-CREATE PROCEDURE sp_user_s (
-    p_id VARCHAR(50)
-)
+-- 6. User: SELECT ONE
+CREATE OR REPLACE PROCEDURE sp_user_s (
+    p_id     IN  VARCHAR2,
+    p_cursor OUT SYS_REFCURSOR
+) AS
 BEGIN
+    OPEN p_cursor FOR
     SELECT c_id, c_role, c_pass
     FROM t_user
     WHERE c_id = p_id;
-END //
-DELIMITER ;
+END;
+/
 
-DROP PROCEDURE IF EXISTS params;
-DELIMITER //
-CREATE PROCEDURE params(IN p_proc_name VARCHAR(64))
+-- 7. Params: 프로시저 매개변수 정보 조회 (오라클 딕셔너리 사용)
+CREATE OR REPLACE PROCEDURE sp_params (
+    p_proc_name IN  VARCHAR2,
+    p_cursor    OUT SYS_REFCURSOR
+) AS
 BEGIN
-    SELECT ORDINAL_POSITION AS ordinal,
-           PARAMETER_NAME AS name,
-           DATA_TYPE AS type,
-           CHARACTER_MAXIMUM_LENGTH AS length
-    FROM INFORMATION_SCHEMA.PARAMETERS
-    WHERE SPECIFIC_NAME = p_proc_name
-    ORDER BY ORDINAL_POSITION;
-END // 
-DELIMITER ;
+    OPEN p_cursor FOR
+    SELECT POSITION AS "ordinal",
+           ARGUMENT_NAME AS "name",
+           DATA_TYPE AS "type",
+           DATA_LENGTH AS "length"
+    FROM USER_ARGUMENTS
+    WHERE OBJECT_NAME = UPPER(p_proc_name)
+    ORDER BY POSITION;
+END;
+/

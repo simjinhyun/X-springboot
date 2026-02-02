@@ -1,4 +1,6 @@
-package kr.co.semperpi;
+package kr.co.semperpi.parser;
+
+import kr.co.semperpi.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +13,8 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+
+import kr.co.semperpi.X;
 
 public class SPList {
     public static class SP {
@@ -30,9 +34,6 @@ public class SPList {
     private final List<SP> procedures = new ArrayList<>();
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<Map<String, Object>>() {
     };
-
-    public SPList() {
-    }
 
     public SPList(String json) throws Exception {
         JsonNode root = X.MAPPER.readTree(json);
@@ -59,8 +60,8 @@ public class SPList {
     }
 
     @SuppressWarnings("unchecked")
-    public List<List<Map<String, Object>>> call() {
-        List<List<Map<String, Object>>> results = new ArrayList<>();
+    public List<XResult> exec() {
+        List<XResult> results = new ArrayList<>();
 
         for (SP sp : procedures) {
             X.logger.info("SP: " + sp);
@@ -71,16 +72,13 @@ public class SPList {
             Object resultSet = out.get("#result-set-1");
 
             if (resultSet instanceof List) {
-                results.add((List<Map<String, Object>>) resultSet);
+                results.add(new XResult((List<Map<String, Object>>) resultSet));
             } else {
-                results.add(List.of(out));
+                results.add(new XResult(List.of(out)));
             }
         }
         X.logger.debug("결과: " + results);
         return results;
     }
 
-    public String toString() {
-        return procedures.toString();
-    }
 }
