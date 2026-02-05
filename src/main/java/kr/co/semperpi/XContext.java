@@ -9,7 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 
-public class XContext {
+public class XContext extends java.util.HashMap<String, Object> {
 
     ////////////////////////////////////////////////////////////////////////////
     /// 프라이빗 멤버와 메서드
@@ -31,14 +31,6 @@ public class XContext {
         X.logger.debug("요청바디:" + body);
     }
 
-    // 정형화된 JSON 응답
-    public static class Response {
-        public String code = "OK";
-        public Object data;
-        public String elapsed;
-        public String reqid = XUtil.generateReqId();
-    }
-
     ////////////////////////////////////////////////////////////////////////////
     /// 퍼블릭 멤버와 메서드
     ////////////////////////////////////////////////////////////////////////////
@@ -49,7 +41,7 @@ public class XContext {
     public boolean replied = false;
     public HttpServletRequest req;
     public HttpServletResponse res;
-    public Response response = new Response();
+    public XResponse response = new XResponse();
 
     public <T> T parse(Class<T> clazz) {
         X.logger.debug("파서클래스: {} 요청헤더파서: {} ", clazz.getSimpleName(), parser);
@@ -59,8 +51,8 @@ public class XContext {
 
         try {
             readBody();
-            Constructor<T> constructor = clazz.getConstructor(String.class);
-            return constructor.newInstance(body);
+            Constructor<T> constructor = clazz.getConstructor(this.getClass(), String.class);
+            return constructor.newInstance(this, body);
         } catch (Throwable t) {
             throw new XError(t.getClass().getSimpleName(), new Object[] { body });
         }
@@ -74,17 +66,22 @@ public class XContext {
                 X.logger.debug("트랜젝션롤백");
             }
         }
-        org.slf4j.MDC.clear();
+
         long elapsed = System.currentTimeMillis() - startTime;
         response.elapsed = XUtil.formatElapsed(elapsed);
+        X.logger.info("응답: {} {} {}", path, response.code, response.elapsed);
+        org.slf4j.MDC.clear();
     }
 
     // 요청을 각 핸들러로 분배
-    public Response dispatch() {
+    public XResponse dispatch() {
+
         try {
             Method m = X.api.get(path);
             if (m != null) {
+                X.before.invoke(null, this);
                 m.invoke(null, this);
+                X.after.invoke(null, this);
             } else {
                 response.code = "ApiNotFound";
                 response.data = path;
@@ -98,9 +95,14 @@ public class XContext {
             } else {
                 response.code = cause.getClass().getSimpleName();
                 response.data = cause.getMessage();
-                cause.printStackTrace(); // 감지한 에러가 아니라면 스텍트레이스
+                // 감지한 에러가 아니라면 스텍트레이스
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                cause.printStackTrace(pw);
+                X.logger.error("런타임에러\n{}", sw.toString());
             }
         } finally {
+
             done();
         }
         return (res.isCommitted()) ? null : response;
@@ -117,6 +119,7 @@ public class XContext {
         this.withinTx = "true".equalsIgnoreCase(req.getHeader("Tx"));
 
         org.slf4j.MDC.put("reqid", response.reqid);
+        X.logger.debug("요청: {} @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", path);
         if (withinTx) {
             X.logger.debug("트랜젝션시작");
         }

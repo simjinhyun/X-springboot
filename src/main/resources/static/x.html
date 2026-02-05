@@ -17,7 +17,7 @@
                 success: function (r) {
                     $.getJSON("json/priority.json", function (priority) {
                         var roles = {}
-                        r.data.c_role.split(",").map(function (x) {
+                        r.data.C_ROLE.split(",").map(function (x) {
                             return roles[x.trim()] = true;
                         });
                         var mainRole = priority.find(function (role) {

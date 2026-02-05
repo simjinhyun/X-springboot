@@ -63,25 +63,45 @@ public class XUtil {
         target.put(url, m);
     }
 
-    public static Map<String, Method> scanHandler() throws Exception {
+    public static Map<String, Method> scanHandler(String path) throws Exception {
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AssignableTypeFilter(Object.class));
 
         Map<String, Method> localApi = new HashMap<>();
-        for (BeanDefinition bd : scanner.findCandidateComponents("api")) {
+        for (BeanDefinition bd : scanner.findCandidateComponents(path + "")) {
             Class<?> clazz = Class.forName(bd.getBeanClassName());
-
-            Arrays.stream(clazz.getDeclaredMethods())
-                    .filter(m -> Modifier.isStatic(m.getModifiers()))
-                    .filter(m -> Modifier.isPublic(m.getModifiers()))
-                    .filter(m -> m.getReturnType().equals(void.class))
-                    .filter(m -> {
-                        Class<?>[] params = m.getParameterTypes();
-                        return params.length == 1 && params[0].equals(XContext.class);
-                    })
-                    .forEach(m -> addHandler(m, clazz, localApi));
+            registerHandlers(clazz, localApi);
         }
         return localApi;
+    }
+
+    private static void registerHandlers(Class<?> clazz, Map<String, Method> localApi) {
+        Arrays.stream(clazz.getDeclaredMethods())
+                .filter(m -> Modifier.isStatic(m.getModifiers()))
+                .filter(m -> Modifier.isPublic(m.getModifiers()))
+                .filter(m -> m.getReturnType().equals(void.class))
+                .filter(m -> {
+                    Class<?>[] params = m.getParameterTypes();
+                    return params.length == 1 && params[0].equals(XContext.class);
+                })
+                .forEach(m -> addHandler(m, clazz, localApi));
+    }
+
+    public static Method findFilter(String className, String methodName) {
+        try {
+            Class<?> clazz = Class.forName(className);
+            Method m = clazz.getDeclaredMethod(methodName, XContext.class);
+            int mod = m.getModifiers();
+
+            if (Modifier.isPublic(mod)
+                    && Modifier.isStatic(mod)
+                    && m.getReturnType().equals(void.class)) {
+                return m;
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -165,6 +185,7 @@ public class XUtil {
      * 평문을 기존해시 salt이용해서 해싱해서 같은지 판단.
      */
     public static boolean match(String plain, String hash) {
+        X.logger.debug("매칭 평문:{} 해시:{}", plain, hash);
         try {
             // "salt:hash" 구조 분리
             String[] parts = hash.split(":");

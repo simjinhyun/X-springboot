@@ -9,7 +9,7 @@ import kr.co.semperpi.*;
 
 public class App {
     public static void about(XContext c) {
-        c.response.data = new X.About();
+        c.response.data = "App 클래스에 ### 홀더 놓고 치환해라";
     }
 
     public static void custom(XContext c) {

@@ -2,6 +2,7 @@ package kr.co.semperpi.parser;
 
 import kr.co.semperpi.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,11 +32,13 @@ public class SPList {
         }
     }
 
+    private XContext ctx;
     private final List<SP> procedures = new ArrayList<>();
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<Map<String, Object>>() {
     };
 
-    public SPList(String json) throws Exception {
+    public SPList(XContext c, String json) throws Exception {
+        this.ctx = c; // 주입!
         JsonNode root = X.MAPPER.readTree(json);
 
         for (JsonNode objNode : root) {
@@ -59,26 +62,50 @@ public class SPList {
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     public List<XResult> exec() {
         List<XResult> results = new ArrayList<>();
-
         for (SP sp : procedures) {
-            X.logger.info("SP: " + sp);
+            results.add(execSP(sp));
+        }
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    private XResult execSP(SP sp) {
+        try {
             SimpleJdbcCall sjc = new SimpleJdbcCall(Objects.requireNonNull(X.jdbcTemplate))
                     .withProcedureName(Objects.requireNonNull(sp.procName));
 
-            Map<String, Object> out = (sp.params == null) ? sjc.execute() : sjc.execute(sp.params);
-            Object resultSet = out.get("#result-set-1");
+            ctx.put("SP", sp);
+            X.spBefore.invoke(null, ctx);
+            X.logger.debug("호출SP: {} {}", sp.procName, sp.params);
 
-            if (resultSet instanceof List) {
-                results.add(new XResult((List<Map<String, Object>>) resultSet));
-            } else {
-                results.add(new XResult(List.of(out)));
+            Map<String, Object> out = (sp.params == null) ? sjc.execute() : sjc.execute(sp.params);
+            X.logger.debug("SimpleJdbcCall 결과: {}", out);
+
+            Object resultSet = null;
+            for (Object value : out.values()) {
+                if (value instanceof List) {
+                    resultSet = value;
+                    break;
+                }
             }
+
+            XResult xr = (resultSet != null)
+                    ? new XResult((List<Map<String, Object>>) resultSet)
+                    : new XResult(List.of(out));
+
+            X.logger.debug("호출결과: {}", xr);
+            ctx.put("RESULT", xr);
+            X.spAfter.invoke(null, ctx);
+
+            return xr;
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getTargetException();
+            throw (cause instanceof RuntimeException re) ? re : new RuntimeException(cause);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("FilterMethodAccessFailed", e);
         }
-        X.logger.debug("결과: " + results);
-        return results;
     }
 
 }
