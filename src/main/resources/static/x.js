@@ -166,16 +166,6 @@ function initX() {
         ]);
     }
 
-
-    function router() {
-        console.log("라우터호출");
-        var hash = location.hash.replace('#', '') || "home";
-        var page = "pages/" + hash + ".html";
-        $('#content').load(page);
-    }
-    $(window).on('hashchange', router);
-    router();
-
     // X 네임스페이스로 노출
     window.X = {
         LANG: LANG,
