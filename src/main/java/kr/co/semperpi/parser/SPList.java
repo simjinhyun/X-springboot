@@ -108,4 +108,7 @@ public class SPList {
         }
     }
 
+    public String toString() {
+        return procedures.toString();
+    }
 }
