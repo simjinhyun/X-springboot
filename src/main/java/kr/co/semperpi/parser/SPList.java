@@ -11,13 +11,13 @@ import java.util.Objects;
 import java.util.Iterator;
 
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import kr.co.semperpi.X;
 
 public class SPList {
+
     public static class SP {
         public final String procName;
         public final Map<String, ?> params;
@@ -53,6 +53,10 @@ public class SPList {
         X.logger.debug("파싱결과:" + toString());
     }
 
+    public String toString() {
+        return procedures.toString();
+    }
+
     public SPList.SP get(int idx) {
         return procedures.get(idx);
     }
@@ -65,7 +69,11 @@ public class SPList {
     public List<XResult> exec() {
         List<XResult> results = new ArrayList<>();
         for (SP sp : procedures) {
-            results.add(execSP(sp));
+            if (sp.procName != null && sp.procName.startsWith("SF_")) {
+                results.add(execSF(sp));
+            } else {
+                results.add(execSP(sp));
+            }
         }
         return results;
     }
@@ -108,7 +116,8 @@ public class SPList {
         }
     }
 
-    public String toString() {
-        return procedures.toString();
+    private XResult execSF(SP sp) {
+        return null;
     }
+
 }

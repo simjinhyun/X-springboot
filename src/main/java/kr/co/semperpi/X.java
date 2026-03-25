@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.lang.NonNull;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -45,6 +46,12 @@ public class X {
     private static Method dummy;
 
     static {
+        SimpleJdbcCall sjc = new SimpleJdbcCall(Objects.requireNonNull(X.jdbcTemplate))
+                .withProcedureName(Objects.requireNonNull("sp_get_sf_details"));
+
+        Map<String, Object> out = sjc.execute();
+        X.logger.debug("SF 목록과 파라메터: " + out);
+
         dummy = XUtil.findFilter("kr.co.semperpi.X", "dummy");
         before = XUtil.findFilter("filter.Main", "before");
         after = XUtil.findFilter("filter.Main", "after");
